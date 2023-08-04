@@ -2,12 +2,14 @@ import json
 import os
 import re
 
-def read_local_cmdr_logs() -> str:
-    try:
-        os.mkdir("LOGFILES")
-    except FileExistsError:
-        pass
+PATH_TO_PARSED_LOGS = os.path.join(os.path.expanduser('~'), "AppData\\Local\\LUCAS\\LOGFILES")
+try:
+    os.mkdir(os.path.join(os.path.expanduser('~'), "AppData\\Local\\LUCAS"))
+    os.mkdir(PATH_TO_PARSED_LOGS)
+except FileExistsError:
+    pass
 
+def read_local_cmdr_logs() -> str:
     cmdr = ""
     path_to_logs = os.path.expanduser('~') + "\\Saved Games\\Frontier Developments\\Elite Dangerous"
     for filename in os.listdir(path_to_logs):
@@ -17,7 +19,7 @@ def read_local_cmdr_logs() -> str:
                 entry = json.loads(line)
                 if entry["event"] == "Commander":
                     cmdr = entry["Name"]
-                    united_log_file = open(f"LOGFILES\\{entry['Name']}.log", "w", encoding="utf-8")
+                    united_log_file = open(f"{PATH_TO_PARSED_LOGS}\\{entry['Name']}.log", "w", encoding="utf-8")
                     break
             log_file.close()
             if cmdr != "":
@@ -43,14 +45,9 @@ def read_local_cmdr_logs() -> str:
     return cmdr
 
 def read_local_strangers_logs(path_to_logs: str, local_cmdr: str):
-    try:
-        os.mkdir("LOGFILES")
-    except FileExistsError:
-        pass
-
-    for filename in os.listdir("LOGFILES"):
+    for filename in os.listdir(PATH_TO_PARSED_LOGS):
         if filename != f"{local_cmdr}.log":
-            os.remove(os.path.join("LOGFILES", filename))
+            os.remove(os.path.join(PATH_TO_PARSED_LOGS, filename))
 
     for filename in os.listdir(path_to_logs):
         if filename.find(".log") != -1:
@@ -58,7 +55,7 @@ def read_local_strangers_logs(path_to_logs: str, local_cmdr: str):
             for line in log_file:
                 entry = json.loads(line)
                 if entry["event"] == "Commander":
-                    cmdr_log_file = open(f"LOGFILES\\{entry['Name']}.log", "a", encoding="utf-8")
+                    cmdr_log_file = open(f"{PATH_TO_PARSED_LOGS}\\{entry['Name']}.log", "a", encoding="utf-8")
                     continue
                 if entry["event"] == "Scan" and entry["ScanType"] in {"Detailed", "AutoScan"} and entry["BodyName"].find("Cluster") == -1:
                     if re.match("^[A-Za-z\s]+\s[A-Z]{2}-[A-Z]\s[abcdefgh]", entry["StarSystem"]) is not None:
@@ -73,7 +70,7 @@ def read_local_strangers_logs(path_to_logs: str, local_cmdr: str):
                 pass
 
 def check_if_cmdr_was_in_boxel(cmdr: str, boxel: str) -> bool:
-    log_file = open(os.path.join("LOGFILES", f"{cmdr}.log"), encoding="utf-8")
+    log_file = open(os.path.join(PATH_TO_PARSED_LOGS, f"{cmdr}.log"), encoding="utf-8")
     for line in log_file:
         entry = json.loads(line)
         if entry["event"] == "Scan" and entry["StarSystem"].find(boxel) != -1:
@@ -82,7 +79,7 @@ def check_if_cmdr_was_in_boxel(cmdr: str, boxel: str) -> bool:
 
 def how_many_cmdrs_were_in_boxel(boxel: str, local_cmdr: str) -> int:
     result = 0
-    for filename in os.listdir("LOGFILES"):
+    for filename in os.listdir(PATH_TO_PARSED_LOGS):
         if filename[:-4] == local_cmdr:
             continue
         if check_if_cmdr_was_in_boxel(filename[:-4], boxel):
@@ -132,8 +129,8 @@ def unite_logs(boxel: str) -> (str, str):
     unique_systems = []
     unique_full_scanned_systems = []
     unique_bodies = []
-    for filename in os.listdir("LOGFILES"):
-        log_file = open(os.path.join("LOGFILES", filename), "r", encoding="utf-8")
+    for filename in os.listdir(PATH_TO_PARSED_LOGS):
+        log_file = open(os.path.join(PATH_TO_PARSED_LOGS, filename), "r", encoding="utf-8")
         for line in log_file:
             entry = json.loads(line)
             if "SystemName" in entry and entry["SystemName"].find(boxel) == -1:

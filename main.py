@@ -24,6 +24,7 @@ status = STATUS_DEFAULT
 def onClick_update_button():
     update_button.configure(state=["disabled"])
     status_text.set("Чтение ваших логов...")
+    root.update()
     status["local_cmdr"] = log_reader.read_local_cmdr_logs()
     status["local_logs_read"] = True
     status_text.set("Ваши логи прочитаны.")
